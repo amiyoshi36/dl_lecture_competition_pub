@@ -74,3 +74,54 @@ class ConvBlock(nn.Module):
         # X = F.glu(X, dim=-2)
 
         return self.dropout(X)
+
+
+
+import torchaudio.transforms as T
+from torchvision import models
+
+class SpectrogramResNetClassifier(nn.Module):
+    def __init__(
+        self,
+        num_classes: int,
+        seq_len: int,
+        in_channels: int,
+        #stretch_factor=0.8,
+    ) -> None:
+        super().__init__()
+        
+        self.spec = T.Spectrogram(
+            n_fft=200,
+            win_length=30,
+            hop_length=3,
+            power=2.0
+            )  # (batch size, in_chunnels=271, seq_len=281) --> (batch size, in_chunnels=271, freq_bin=101, time=94)
+        
+        # (batch size, in_chunnels=271, freq_bin=101, time=94) --> (batch size, 3, 101, 94)
+        self.reduce_channels = nn.Conv2d(in_channels, 3, kernel_size=1)
+
+        self.spec_aug = torch.nn.Sequential(
+            #T.TimeStretch(stretch_factor, fixed_rate=True),
+            T.FrequencyMasking(iid_masks=True, freq_mask_param=30),
+            T.TimeMasking(iid_masks=True, time_mask_param=30)
+        )
+
+        self.resnet = models.resnet18(pretrained=True)
+        num_ftrs = self.resnet.fc.in_features
+        self.resnet.fc = nn.Linear(num_ftrs, num_classes)
+
+
+    def forward(self, X: torch.Tensor) -> torch.Tensor:
+        
+        # Convert to power spectrogram
+        X = self.spec(X)
+
+        # Apply SpecAugment
+        X = self.spec_aug(X)
+
+        # reduce chunnels
+        X = self.reduce_channels(X)
+        
+        # ResNet
+        X = self.resnet(X)
+        return X
