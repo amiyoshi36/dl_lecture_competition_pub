@@ -10,4 +10,7 @@ use_wandb: False
 data_dir: data
 
 # Evaluation
-model_path: 
+model_path:   # eval.py用にmodel_best.ptのパスを書く?
+
+# model name
+model: SpectrogramResNetClassifier  #BasicConvClassifier
