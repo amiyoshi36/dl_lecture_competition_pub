@@ -11,6 +11,7 @@ from tqdm import tqdm
 
 from src.datasets import ThingsMEGDataset
 from src.models import BasicConvClassifier
+from src.models import SpectrogramResNetClassifier
 from src.utils import set_seed
 
 
