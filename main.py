@@ -39,10 +39,14 @@ def run(args: DictConfig):
     # ------------------
     #       Model
     # ------------------
-    model = BasicConvClassifier(
-        train_set.num_classes, train_set.seq_len, train_set.num_channels
-    ).to(args.device)
-
+    if args.model == "BasicConvClassifier":  # choose model
+        model = BasicConvClassifier(
+            train_set.num_classes, train_set.seq_len, train_set.num_channels
+        ).to(args.device)
+    if args.model == "SpectrogramResNetClassifier":
+        model = SpectrogramResNetClassifier(
+            train_set.num_classes, train_set.seq_len, train_set.num_channels
+        ).to(args.device)
     # ------------------
     #     Optimizer
     # ------------------
