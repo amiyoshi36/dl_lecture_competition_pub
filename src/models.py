@@ -125,3 +125,68 @@ class SpectrogramResNetClassifier(nn.Module):
         # ResNet
         X = self.resnet(X)
         return X
+
+
+
+class SpectrogramCNNClassifier(nn.Module):
+    def __init__(
+        self,
+        num_classes: int,
+        seq_len: int,
+        in_channels: int,
+        #stretch_factor=0.8,
+    ) -> None:
+        super().__init__()
+        
+        self.spec = T.Spectrogram(
+            n_fft=200,
+            win_length=30,
+            hop_length=3,
+            power=2.0
+            )  # (batch size, in_chunnels=271, seq_len=281) --> (batch size, in_chunnels=271, freq_bin=101, time=94)
+        
+
+        self.spec_aug = torch.nn.Sequential(
+            #T.TimeStretch(stretch_factor, fixed_rate=True),
+            T.FrequencyMasking(iid_masks=True, freq_mask_param=5),
+            T.TimeMasking(iid_masks=True, time_mask_param=5)
+        )
+
+        self.conv0 = nn.Conv2d(in_channels=271, out_channels=500, kernel_size=3, padding=[3//2, 3//2], padding_mode="replicate")
+        self.batchnorm0 = nn.BatchNorm2d(num_features=500)
+        self.conv1 = nn.Conv2d(in_channels=500, out_channels=500, kernel_size=3, padding=[3//2, 3//2], padding_mode="replicate")
+        self.batchnorm1 = nn.BatchNorm2d(num_features=500)
+        self.conv2 = nn.Conv2d(in_channels=500, out_channels=500, kernel_size=3, padding=[3//2, 3//2], padding_mode="replicate")
+        self.batchnorm2 = nn.BatchNorm2d(num_features=500)
+
+
+        self.classifier = nn.Sequential(
+            nn.Linear(500 * 101 * 94, 500 * 101),  # 500チャネル、101x94の画像サイズ
+            nn.ReLU(inplace=True),
+            nn.Linear(500 * 101, 2000),  
+            nn.ReLU(inplace=True),
+            nn.Linear(2000, num_classes)
+        )
+
+
+    def forward(self, X: torch.Tensor) -> torch.Tensor:
+        
+        # Convert to power spectrogram
+        X = self.spec(X)
+
+        # Apply SpecAugment
+        X = self.spec_aug(X)
+
+        # CNN
+        X = self.conv0(X)
+        X = F.gelu(self.batchnorm0(X))
+        X = self.conv1(X) + X
+        X = F.gelu(self.batchnorm1(X))
+        X = self.conv2(X) + X
+        X = F.gelu(self.batchnorm2(X))
+        
+        # classifier
+        X = X.view(X.size(0), -1)  # フラット化
+        X = self.classifier(X)
+
+        return X
