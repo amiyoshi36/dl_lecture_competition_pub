@@ -12,6 +12,7 @@ from tqdm import tqdm
 from src.datasets import ThingsMEGDataset
 from src.models import BasicConvClassifier
 from src.models import SpectrogramResNetClassifier
+from src.models import SpectrogramCNNClassifier
 from src.utils import set_seed
 
 
@@ -38,6 +39,10 @@ def run(args: DictConfig):
         ).to(args.device)
     model.load_state_dict(torch.load(args.model_path, map_location=args.device))
     if args.model == "SpectrogramResNetClassifier":
+        model = SpectrogramResNetClassifier(
+            train_set.num_classes, train_set.seq_len, train_set.num_channels
+        ).to(args.device)
+    if args.model == "SpectrogramCNNClassifier":
         model = SpectrogramResNetClassifier(
             train_set.num_classes, train_set.seq_len, train_set.num_channels
         ).to(args.device)
