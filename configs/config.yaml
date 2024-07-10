@@ -13,4 +13,4 @@ data_dir: data
 model_path:   # eval.py用にmodel_best.ptのパスを書く?
 
 # model name
-model: SpectrogramResNetClassifier  #BasicConvClassifier
+model: SpectrogramCNNClassifier  #SpectrogramResNetClassifier  #BasicConvClassifier
