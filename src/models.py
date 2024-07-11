@@ -190,3 +190,60 @@ class SpectrogramCNNClassifier(nn.Module):
         X = self.classifier(X)
 
         return X
+
+
+
+class SpectrumMLPClassifier(nn.Module):
+    def __init__(
+        self,
+        num_classes: int,
+        seq_len: int,
+        in_channels: int,
+        #stretch_factor=0.8,
+    ) -> None:
+        super().__init__()
+        
+        self.spec = T.Spectrogram(
+            n_fft=400,
+            win_length=400,
+            hop_length=300,
+            power=2.0
+            )  # (batch size, in_chunnels=271, seq_len=281) --> (batch size, in_chunnels=271, freq_bin=201, time=1)
+        
+
+        self.spec_aug = torch.nn.Sequential(
+            #T.TimeStretch(stretch_factor, fixed_rate=True),
+            T.FrequencyMasking(iid_masks=True, freq_mask_param=5),
+            #T.TimeMasking(iid_masks=True, time_mask_param=5)
+        )
+
+
+        self.classifier = nn.Sequential(
+            nn.Linear(271 * 201 * 1, 5000),  
+            nn.BatchNorm1d(num_features=5000),
+            nn.ReLU(inplace=True),
+            nn.Linear(5000, 2000),  
+            nn.BatchNorm1d(num_features=2000),
+            nn.ReLU(inplace=True),
+            nn.Linear(2000, 2000),  
+            nn.BatchNorm1d(num_features=2000),
+            nn.ReLU(inplace=True),
+            nn.Linear(2000, num_classes)
+        )
+
+
+    def forward(self, X: torch.Tensor) -> torch.Tensor:
+        
+        # Convert to power spectrum
+        X = self.spec(X)
+
+        # Apply SpecAugment
+        X = self.spec_aug(X)
+
+        # flatten
+        X = X.view(X.size(0), -1)
+
+        # classifier
+        X = self.classifier(X)
+
+        return X
