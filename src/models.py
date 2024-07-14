@@ -321,7 +321,9 @@ class MEGencoder(nn.Module):
 
         X = X.permute(0,2,1)  # (batch_size, num_channels, seq_len) --> (batch_size, seq_len, num_channels) 
 
-        MEG_embeddings = self.MEGencoder(X)
+        out, (hn, cn) = self.MEGencoder(X)
+        MEG_embeddings = hn[-1]
+
         MEG_embeddings = self.MEGMLP(MEG_embeddings)
 
         return MEG_embeddings
