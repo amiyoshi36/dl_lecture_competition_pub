@@ -82,6 +82,14 @@ class ThingsMEGDataset_2(torch.utils.data.Dataset):  # load images too
             completed_paths.append(path)
           
           self.image_paths = completed_paths
+
+
+        # 画像のプリロード
+        self.images = []
+        for path in self.image_paths:
+            image = Image.open(path).convert("RGB")
+            image = self.transform(image)
+            self.images.append(image)
           
 
     def __len__(self) -> int:
@@ -89,9 +97,9 @@ class ThingsMEGDataset_2(torch.utils.data.Dataset):  # load images too
 
     def __getitem__(self, i):
         if hasattr(self, "y"):
-            image = Image.open(self.image_paths[i]).convert("RGB")
-            image = self.transform(image)  # Transform the image to a tensor
-            return self.X[i], self.y[i], image, self.subject_idxs[i]  #, self.image_paths[i]
+            #image = Image.open(self.image_paths[i]).convert("RGB")
+            #image = self.transform(image)  # Transform the image to a tensor
+            return self.X[i], self.y[i], self.images[i], self.subject_idxs[i]  #, self.image_paths[i]
         else:
             return self.X[i], self.subject_idxs[i]
         
