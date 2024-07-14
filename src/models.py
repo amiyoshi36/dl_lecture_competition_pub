@@ -272,8 +272,8 @@ class imageencoder(nn.Module):
         
 
         self.imageencoder = models.resnet18(pretrained=True)
-        num_ftrs = self.resnet.fc.in_features
-        self.resnet.fc = nn.Linear(num_ftrs, embdim)
+        num_ftrs = self.imageencoder.fc.in_features
+        self.imageencoder.fc = nn.Linear(num_ftrs, embdim)
 
         self.imageMLP = nn.Sequential(
             nn.Linear(embdim, embdim),
