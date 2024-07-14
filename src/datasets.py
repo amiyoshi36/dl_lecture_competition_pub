@@ -75,7 +75,8 @@ class ThingsMEGDataset_2(torch.utils.data.Dataset):  # load images too
           
           for path in self.image_paths:
             if not "/" in path:  # フォルダ名が欠落していたら, ファイル名から推測して補完
-              foldername = path.split("_")[0]
+              #foldername = path.split("_")[0]
+              foldername = '_'.join(path.split("_")[:-1])
               path = os.path.join(foldername+"/", path)
             path = os.path.join("data/Images/", path)
             completed_paths.append(path)
