@@ -280,7 +280,7 @@ class imageencoder(nn.Module):
             nn.ReLU(inplace=True),
             nn.Linear(embdim, embdim),
             nn.Dropout(0.25),
-            nn.nn.LayerNorm(embdim)
+            nn.LayerNorm(embdim)
         )
 
 
@@ -312,7 +312,7 @@ class MEGencoder(nn.Module):
             nn.ReLU(inplace=True),
             nn.Linear(embdim, embdim),
             nn.Dropout(0.25),
-            nn.nn.LayerNorm(embdim)
+            nn.LayerNorm(embdim)
         )
 
 
@@ -343,7 +343,7 @@ class MEGclassifier(nn.Module):
             nn.ReLU(inplace=True),
             nn.Linear(embdim, embdim),
             nn.Dropout(0.25),
-            nn.nn.LayerNorm(embdim),
+            nn.LayerNorm(embdim),
             nn.ReLU(inplace=True),
             nn.Linear(embdim, num_classes)
         )
