@@ -213,19 +213,22 @@ class SpectrumMLPClassifier(nn.Module):
 
         self.spec_aug = torch.nn.Sequential(
             #T.TimeStretch(stretch_factor, fixed_rate=True),
-            T.FrequencyMasking(iid_masks=True, freq_mask_param=5),
+            T.FrequencyMasking(iid_masks=True, freq_mask_param=50),
             #T.TimeMasking(iid_masks=True, time_mask_param=5)
         )
 
 
         self.classifier = nn.Sequential(
             nn.Linear(271 * 201 * 1, 5000),  
+            nn.Dropout(0.25),
             nn.BatchNorm1d(num_features=5000),
             nn.ReLU(inplace=True),
             nn.Linear(5000, 2000),  
+            nn.Dropout(0.25),
             nn.BatchNorm1d(num_features=2000),
             nn.ReLU(inplace=True),
             nn.Linear(2000, 2000),  
+            nn.Dropout(0.25),
             nn.BatchNorm1d(num_features=2000),
             nn.ReLU(inplace=True),
             nn.Linear(2000, num_classes)
@@ -247,3 +250,106 @@ class SpectrumMLPClassifier(nn.Module):
         X = self.classifier(X)
 
         return X
+
+
+
+
+#################
+#  CLIP
+#################
+
+
+class imageencoder(nn.Module):
+    def __init__(
+        self,
+        num_classes: int,
+        seq_len: int,
+        in_channels: int,
+        embdim: int,         ##
+    ) -> None:
+        super().__init__()
+        
+        
+
+        self.imageencoder = models.resnet18(pretrained=True)
+        num_ftrs = self.resnet.fc.in_features
+        self.resnet.fc = nn.Linear(num_ftrs, embdim)
+
+        self.imageMLP = nn.Sequential(
+            nn.Linear(embdim, embdim),
+            nn.ReLU(inplace=True),
+            nn.Linear(embdim, embdim),
+            nn.Dropout(0.25),
+            nn.nn.LayerNorm(embdim)
+        )
+
+
+
+    def forward(self, images: torch.Tensor) -> torch.Tensor:
+
+        image_embeddings = self.imageencoder(images)
+        image_embeddings = self.imageMLP(image_embeddings)
+
+        return image_embeddings
+
+
+
+class MEGencoder(nn.Module):
+    def __init__(
+        self,
+        num_classes: int,
+        seq_len: int,
+        in_channels: int,
+        embdim: int,         ##
+    ) -> None:
+        super().__init__()
+
+
+        self.MEGencoder = nn.LSTM(in_channels, embdim, num_layers=2, batch_first=True)
+
+        self.MEGMLP = nn.Sequential(
+            nn.Linear(embdim, embdim),
+            nn.ReLU(inplace=True),
+            nn.Linear(embdim, embdim),
+            nn.Dropout(0.25),
+            nn.nn.LayerNorm(embdim)
+        )
+
+
+
+    def forward(self, X: torch.Tensor) -> torch.Tensor:
+
+        X = X.permute(0,2,1)  # (batch_size, num_channels, seq_len) --> (batch_size, seq_len, num_channels) 
+
+        MEG_embeddings = self.MEGencoder(X)
+        MEG_embeddings = self.MEGMLP(MEG_embeddings)
+
+        return MEG_embeddings
+
+
+
+class MEGclassifier(nn.Module):
+    def __init__(
+        self,
+        num_classes: int,
+        seq_len: int,
+        in_channels: int,
+        embdim: int,         ##
+    ) -> None:
+        super().__init__()
+
+        self.classifier = nn.Sequential(
+            nn.Linear(embdim, embdim),
+            nn.ReLU(inplace=True),
+            nn.Linear(embdim, embdim),
+            nn.Dropout(0.25),
+            nn.nn.LayerNorm(embdim),
+            nn.ReLU(inplace=True),
+            nn.Linear(embdim, num_classes)
+        )
+
+
+
+    def forward(self, MEG_embeddings: torch.Tensor) -> torch.Tensor:
+
+        return self.classifier(MEG_embeddings)
