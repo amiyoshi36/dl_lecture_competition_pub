@@ -90,6 +90,10 @@ class ThingsMEGDataset_2(torch.utils.data.Dataset):  # load images too
             image = Image.open(path).convert("RGB")
             image = self.transform(image)
             self.images.append(image)
+        
+        # save as tensor
+        tensor_path = os.path.join(data_dir, f"{split}_images.pt")
+        torch.save(self.images, tensor_path)
           
 
     def __len__(self) -> int:
