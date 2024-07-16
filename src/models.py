@@ -355,3 +355,39 @@ class MEGclassifier(nn.Module):
     def forward(self, MEG_embeddings: torch.Tensor) -> torch.Tensor:
 
         return self.classifier(MEG_embeddings)
+
+
+
+
+class LSTMclassifier(nn.Module):
+    def __init__(
+        self,
+        num_classes: int,
+        seq_len: int,
+        in_channels: int,
+        embdim: int,         ##
+    ) -> None:
+        super().__init__()
+
+
+        self.lstm = nn.LSTM(in_channels, embdim, num_layers=2, batch_first=True)
+
+        self.mlp = nn.Sequential(
+            nn.Linear(embdim, embdim),
+            nn.ReLU(inplace=True),
+            nn.Linear(embdim, num_classes),
+            nn.Dropout(0.25),
+            nn.LayerNorm(embdim)
+        )
+
+
+
+    def forward(self, X: torch.Tensor) -> torch.Tensor:
+
+        X = X.permute(0,2,1)  # (batch_size, num_channels, seq_len) --> (batch_size, seq_len, num_channels) 
+
+        out, (hn, cn) = self.lstm(X)
+        MEG_embeddings = hn[-1]
+
+
+        return self.mlp(MEG_embeddings)
