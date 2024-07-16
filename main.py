@@ -10,12 +10,15 @@ from termcolor import cprint
 from tqdm import tqdm
 
 from src.datasets import ThingsMEGDataset
+from src.datasets import ThingsMEGDataset_2
 from src.models import BasicConvClassifier
 from src.models import SpectrogramResNetClassifier
 from src.models import SpectrogramCNNClassifier
 from src.models import SpectrumMLPClassifier
+from src.models import LSTMclassifier
 from src.utils import set_seed
 
+# for models other than CLIP
 
 @hydra.main(version_base=None, config_path="configs", config_name="config")  # configsにあるconfig.yamlを読み込む。
 def run(args: DictConfig):
@@ -30,6 +33,7 @@ def run(args: DictConfig):
     # ------------------
     loader_args = {"batch_size": args.batch_size, "num_workers": args.num_workers}
     
+    # use ThingsMEGDataset
     train_set = ThingsMEGDataset("train", args.data_dir)
     train_loader = torch.utils.data.DataLoader(train_set, shuffle=True, **loader_args)
     val_set = ThingsMEGDataset("val", args.data_dir)
@@ -58,6 +62,10 @@ def run(args: DictConfig):
         model = SpectrumMLPClassifier(
             train_set.num_classes, train_set.seq_len, train_set.num_channels
         ).to(args.device)
+    if args.model == "LSTMclassifier":
+        model = LSTMclassifier(
+            train_set.num_classes, train_set.seq_len, train_set.num_channels
+        ).to(args.device)
     # ------------------
     #     Optimizer
     # ------------------
@@ -77,8 +85,8 @@ def run(args: DictConfig):
         train_loss, train_acc, val_loss, val_acc = [], [], [], []
         
         model.train()
-        for X, y, subject_idxs in tqdm(train_loader, desc="Train"):
-            X, y = X.to(args.device), y.to(args.device)
+        for X, y, images, subject_idxs in tqdm(train_loader, desc="Train"):
+            X, y, images = X.to(args.device), y.to(args.device), images.to(args.device)
 
             y_pred = model(X)
             
@@ -93,8 +101,8 @@ def run(args: DictConfig):
             train_acc.append(acc.item())
 
         model.eval()
-        for X, y, subject_idxs in tqdm(val_loader, desc="Validation"):
-            X, y = X.to(args.device), y.to(args.device)
+        for X, y, images, subject_idxs in tqdm(val_loader, desc="Validation"):
+            X, y, images = X.to(args.device), y.to(args.device), images.to(args.device)
             
             with torch.no_grad():
                 y_pred = model(X)

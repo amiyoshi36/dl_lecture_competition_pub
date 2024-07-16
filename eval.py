@@ -10,12 +10,15 @@ from termcolor import cprint
 from tqdm import tqdm
 
 from src.datasets import ThingsMEGDataset
+from src.datasets import ThingsMEGDataset_2
 from src.models import BasicConvClassifier
 from src.models import SpectrogramResNetClassifier
 from src.models import SpectrogramCNNClassifier
 from src.models import SpectrumMLPClassifier
+from src.models import LSTMclassifier
 from src.utils import set_seed
 
+# for models other than CLIP
 
 @torch.no_grad()
 @hydra.main(version_base=None, config_path="configs", config_name="config")
@@ -26,6 +29,7 @@ def run(args: DictConfig):
     # ------------------
     #    Dataloader
     # ------------------    
+    # use ThingsMEGDataset
     test_set = ThingsMEGDataset("test", args.data_dir)
     test_loader = torch.utils.data.DataLoader(
         test_set, shuffle=False, batch_size=args.batch_size, num_workers=args.num_workers
@@ -49,6 +53,10 @@ def run(args: DictConfig):
         ).to(args.device)
     if args.model == "SpectrumMLPClassifier":
         model = SpectrumMLPClassifier(
+            train_set.num_classes, train_set.seq_len, train_set.num_channels
+        ).to(args.device)
+    if args.model == "LSTMclassifier":
+        model = LSTMclassifier(
             train_set.num_classes, train_set.seq_len, train_set.num_channels
         ).to(args.device)
     # ------------------
