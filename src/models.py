@@ -372,6 +372,8 @@ class LSTMclassifier(nn.Module):
 
         self.lstm = nn.LSTM(in_channels, embdim, num_layers=2, batch_first=True, dropout=0.5)
 
+        self.embdim = embdim
+
         self.mlp = nn.Sequential(
             nn.Linear(embdim, embdim),
             nn.ReLU(inplace=True),
@@ -388,7 +390,7 @@ class LSTMclassifier(nn.Module):
 
         out, (hn, cn) = self.lstm(X)
         #MEG_embeddings = hn[-1]
-        MEG_embeddings = hn.view(-1, embdim)  # ??
+        MEG_embeddings = hn.view(-1, self.embdim)  # ??
 
 
         return self.mlp(MEG_embeddings)
