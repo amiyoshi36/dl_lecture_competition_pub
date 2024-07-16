@@ -219,7 +219,7 @@ def run(args: DictConfig):
             
             with torch.no_grad():
                 MEG_embeddings = model_MEGencoder(X)  # 埋め込み
-                y_pred = model(MEG_embeddings)
+                y_pred = model_MEGclassifier(MEG_embeddings)
             
             val_loss.append(F.cross_entropy(y_pred, y).item())
             val_acc.append(accuracy(y_pred, y).item())
