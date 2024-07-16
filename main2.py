@@ -143,7 +143,8 @@ def run(args: DictConfig):
                 images_loss = F.cross_entropy(logits.T, targets.T)
                 loss =  (images_loss + MEG_loss) / 2.0 # shape: (batch_size)
             
-            val_loss.append(F.cross_entropy(y_pred, y).item())
+            #val_loss.append(F.cross_entropy(y_pred, y).item())
+            val_loss.append(loss.item())
 
 
         print(f"Epoch {epoch+1}/{args.epochs} | train loss: {np.mean(train_loss):.3f} | val loss: {np.mean(val_loss):.3f}")
