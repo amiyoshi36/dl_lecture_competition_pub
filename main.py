@@ -64,7 +64,7 @@ def run(args: DictConfig):
         ).to(args.device)
     if args.model == "LSTMclassifier":
         model = LSTMclassifier(
-            train_set.num_classes, train_set.seq_len, train_set.num_channels
+            train_set.num_classes, train_set.seq_len, train_set.num_channels, embdim=args.embdim
         ).to(args.device)
     # ------------------
     #     Optimizer
@@ -85,8 +85,8 @@ def run(args: DictConfig):
         train_loss, train_acc, val_loss, val_acc = [], [], [], []
         
         model.train()
-        for X, y, images, subject_idxs in tqdm(train_loader, desc="Train"):
-            X, y, images = X.to(args.device), y.to(args.device), images.to(args.device)
+        for X, y, subject_idxs in tqdm(train_loader, desc="Train"):
+            X, y = X.to(args.device), y.to(args.device)
 
             y_pred = model(X)
             
@@ -101,8 +101,8 @@ def run(args: DictConfig):
             train_acc.append(acc.item())
 
         model.eval()
-        for X, y, images, subject_idxs in tqdm(val_loader, desc="Validation"):
-            X, y, images = X.to(args.device), y.to(args.device), images.to(args.device)
+        for X, y, subject_idxs in tqdm(val_loader, desc="Validation"):
+            X, y = X.to(args.device), y.to(args.device)
             
             with torch.no_grad():
                 y_pred = model(X)
