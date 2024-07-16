@@ -57,7 +57,7 @@ def run(args: DictConfig):
         ).to(args.device)
     if args.model == "LSTMclassifier":
         model = LSTMclassifier(
-            train_set.num_classes, train_set.seq_len, train_set.num_channels
+            train_set.num_classes, train_set.seq_len, train_set.num_channels, embdim=args.embdim
         ).to(args.device)
     # ------------------
     #  Start evaluation
