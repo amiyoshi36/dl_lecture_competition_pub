@@ -387,7 +387,8 @@ class LSTMclassifier(nn.Module):
         X = X.permute(0,2,1)  # (batch_size, num_channels, seq_len) --> (batch_size, seq_len, num_channels) 
 
         out, (hn, cn) = self.lstm(X)
-        MEG_embeddings = hn[-1]
+        #MEG_embeddings = hn[-1]
+        MEG_embeddings = hn.view(-1, embdim)  # ??
 
 
         return self.mlp(MEG_embeddings)
