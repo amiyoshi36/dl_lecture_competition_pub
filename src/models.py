@@ -377,7 +377,7 @@ class LSTMclassifier(nn.Module):
             nn.ReLU(inplace=True),
             nn.Linear(embdim, num_classes),
             nn.Dropout(0.25),
-            nn.LayerNorm(embdim)
+            nn.LayerNorm(num_classes)
         )
 
 
