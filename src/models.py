@@ -370,7 +370,7 @@ class LSTMclassifier(nn.Module):
         super().__init__()
 
 
-        self.lstm = nn.LSTM(in_channels, embdim, num_layers=2, batch_first=True)
+        self.lstm = nn.LSTM(in_channels, embdim, num_layers=2, batch_first=True, dropout=0.5)
 
         self.mlp = nn.Sequential(
             nn.Linear(embdim, embdim),
