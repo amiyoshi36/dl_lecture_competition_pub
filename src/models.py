@@ -422,7 +422,7 @@ class EnsembleClassifier(nn.Module):
         super().__init__()
 
         self.BasicConvClassifier = BasicConvClassifier(num_classes, seq_len, in_channels, hid_dim=128)
-        self.LSTMclassifier = LSTMclassifier(num_classes, seq_len, num_channels, embdim=500)
+        self.LSTMclassifier = LSTMclassifier(num_classes, seq_len, in_channels, embdim=500)
         self.MEGencoder = BasicConvClassifier(num_classes, seq_len, in_channels, hid_dim=128)
         
         # 学習済みモデルをload
@@ -433,7 +433,7 @@ class EnsembleClassifier(nn.Module):
         # パラメータを固定
         for param in self.BasicConvClassifier.parameters():
             param.requires_grad = False
-        for param in self.lstm.parameters():
+        for param in self.LSTMclassifier.parameters():
             param.requires_grad = False
         for param in self.MEGencoder.parameters():
             param.requires_grad = False
