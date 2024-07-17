@@ -537,3 +537,35 @@ class TransformerClassifier(nn.Module):
         X = self.mlp(X)  # (batch_size, num_classes)
         return X
 
+
+class BasicConvClassifier2(nn.Module):
+    def __init__(
+        self,
+        num_classes: int,
+        seq_len: int,
+        in_channels: int,
+        hid_dim: int = 128
+    ) -> None:
+        super().__init__()
+        
+        self.basicconv1 = BasicConvClassifier(num_classes, seq_len, in_channels)
+        self.basicconv2 = BasicConvClassifier(num_classes, seq_len, in_channels)
+
+        self.mlp = nn.Linear(num_classes+num_classes, num_classes)
+
+        
+
+    def forward(self, X: torch.Tensor) -> torch.Tensor:
+        """_summary_
+        Args:
+            X ( b, c, t ): _description_
+        Returns:
+            X ( b, num_classes ): _description_
+        """
+
+        X1 = self.basicconv1(X)
+        X2 = self.basicconv2(X)
+
+        Y = torch.cat((X1, X2), dim=1)
+
+        return self.mlp(Y)
