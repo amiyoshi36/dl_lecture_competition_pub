@@ -25,6 +25,40 @@ from src.utils import set_seed
 
 # for models other than CLIP
 
+
+# 前処理
+import scipy.signal
+from sklearn.preprocessing import StandardScaler
+
+# リサンプリング
+def resample_signal(signal, orig_sr, target_sr):
+    duration = signal.shape[-1] / orig_sr
+    new_length = int(duration * target_sr)
+    resampled_signal = scipy.signal.resample(signal, new_length, axis=-1)
+    return resampled_signal
+
+# フィルタリング
+def butter_bandpass_filter(data, lowcut, highcut, fs, order=5):
+    nyquist = 0.5 * fs
+    low = lowcut / nyquist
+    high = highcut / nyquist
+    b, a = scipy.signal.butter(order, [low, high], btype='band')
+    y = scipy.signal.lfilter(b, a, data)
+    return y
+
+# スケーリング
+def scale_signal(signal):
+    scaler = StandardScaler()
+    scaled_signal = scaler.fit_transform(signal)
+    return scaled_signal
+
+# ベースライン補正
+def baseline_correction(signal):
+    mean_baseline = np.mean(signal, axis=-1, keepdims=True)
+    corrected_signal = signal - mean_baseline
+    return corrected_signal
+
+
 @hydra.main(version_base=None, config_path="configs", config_name="config")  # configsにあるconfig.yamlを読み込む。
 def run(args: DictConfig):
     set_seed(args.seed)
@@ -53,7 +87,7 @@ def run(args: DictConfig):
     # ------------------
     if args.model == "BasicConvClassifier":  # choose model
         model = BasicConvClassifier(
-            train_set.num_classes, train_set.seq_len, train_set.num_channels
+            train_set.num_classes, train_set.seq_len, train_set.num_channels  # リサンプリングしたらseq_len変更？？  --> datasetのseq_lenを修正した
         ).to(args.device)
     if args.model == "SpectrogramResNetClassifier":
         model = SpectrogramResNetClassifier(
