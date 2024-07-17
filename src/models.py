@@ -569,3 +569,43 @@ class BasicConvClassifier2(nn.Module):
         Y = torch.cat((X1, X2), dim=1)
 
         return self.mlp(Y)
+
+
+
+class BasicConvClassifier5(nn.Module):
+    def __init__(
+        self,
+        num_classes: int,
+        seq_len: int,
+        in_channels: int,
+        hid_dim: int = 128
+    ) -> None:
+        super().__init__()
+        
+        self.basicconv1 = BasicConvClassifier(num_classes, seq_len, in_channels)
+        self.basicconv2 = BasicConvClassifier(num_classes, seq_len, in_channels)
+        self.basicconv3 = BasicConvClassifier(num_classes, seq_len, in_channels)
+        self.basicconv4 = BasicConvClassifier(num_classes, seq_len, in_channels)
+        self.basicconv5 = BasicConvClassifier(num_classes, seq_len, in_channels)
+
+        self.mlp = nn.Linear(num_classes*5, num_classes)
+
+        
+
+    def forward(self, X: torch.Tensor) -> torch.Tensor:
+        """_summary_
+        Args:
+            X ( b, c, t ): _description_
+        Returns:
+            X ( b, num_classes ): _description_
+        """
+
+        X1 = self.basicconv1(X)
+        X2 = self.basicconv2(X)
+        X3 = self.basicconv3(X)
+        X4 = self.basicconv4(X)
+        X5 = self.basicconv5(X)
+
+        Y = torch.cat((X1, X2, X3, X4, X5), dim=1)
+
+        return self.mlp(Y)
