@@ -20,6 +20,17 @@ from src.models import MEGencoder
 from src.models import MEGclassifier
 from src.utils import set_seed
 
+# for CLIP
+
+# https://github.com/moein-shariatnia/OpenAI-CLIP
+def cross_entropy(preds, targets, reduction='none'):
+    log_softmax = nn.LogSoftmax(dim=-1)
+    loss = (-targets * log_softmax(preds)).sum(1)
+    if reduction == "none":
+        return loss
+    elif reduction == "mean":
+        return loss.mean()
+
 
 @hydra.main(version_base=None, config_path="configs", config_name="config")  # configsにあるconfig.yamlを読み込む。
 def run(args: DictConfig):
@@ -106,12 +117,12 @@ def run(args: DictConfig):
             targets = F.softmax(
                 (images_similarity + MEG_similarity) / 2 , dim=-1
             )
-            #MEG_loss = cross_entropy(logits, targets, reduction='none')
-            #images_loss = cross_entropy(logits.T, targets.T, reduction='none')
-            #loss =  (images_loss + MEG_loss) / 2.0 # shape: (batch_size)
-            MEG_loss = F.cross_entropy(logits, targets)
-            images_loss = F.cross_entropy(logits.T, targets.T)
+            MEG_loss = cross_entropy(logits, targets, reduction='none')
+            images_loss = cross_entropy(logits.T, targets.T, reduction='none')
             loss =  (images_loss + MEG_loss) / 2.0 # shape: (batch_size)
+            #MEG_loss = F.cross_entropy(logits, targets)
+            #images_loss = F.cross_entropy(logits.T, targets.T)
+            #loss =  (images_loss + MEG_loss) / 2.0 # shape: (batch_size)
             
             train_loss.append(loss.item())
             optimizer.zero_grad()
@@ -136,12 +147,12 @@ def run(args: DictConfig):
                 targets = F.softmax(
                     (images_similarity + MEG_similarity) / 2 , dim=-1
                 )
-                #MEG_loss = cross_entropy(logits, targets, reduction='none')
-                #images_loss = cross_entropy(logits.T, targets.T, reduction='none')
-                #loss =  (images_loss + MEG_loss) / 2.0 # shape: (batch_size)
-                MEG_loss = F.cross_entropy(logits, targets)
-                images_loss = F.cross_entropy(logits.T, targets.T)
+                MEG_loss = cross_entropy(logits, targets, reduction='none')
+                images_loss = cross_entropy(logits.T, targets.T, reduction='none')
                 loss =  (images_loss + MEG_loss) / 2.0 # shape: (batch_size)
+                #MEG_loss = F.cross_entropy(logits, targets)
+                #images_loss = F.cross_entropy(logits.T, targets.T)
+                #loss =  (images_loss + MEG_loss) / 2.0 # shape: (batch_size)
             
             #val_loss.append(F.cross_entropy(y_pred, y).item())
             val_loss.append(loss.item())
