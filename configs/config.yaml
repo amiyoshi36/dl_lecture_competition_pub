@@ -13,7 +13,7 @@ data_dir: data
 model_path:   # eval.py用にmodel_best.ptのパスを書く?
 
 # model name
-model: LSTMclassifier  #CLIP  #SpectrumMLPClassifier  #SpectrogramCNNClassifier  #SpectrogramResNetClassifier  #BasicConvClassifier
+model: EnsembleClassifier  #LSTMclassifier  #CLIP  #SpectrumMLPClassifier  #SpectrogramCNNClassifier  #SpectrogramResNetClassifier  #BasicConvClassifier
 
 # embedding dim for CLIP
 embdim: 300
