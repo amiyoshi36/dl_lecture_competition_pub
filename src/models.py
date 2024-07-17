@@ -609,3 +609,52 @@ class BasicConvClassifier5(nn.Module):
         Y = torch.cat((X1, X2, X3, X4, X5), dim=1)
 
         return self.mlp(Y)
+
+
+
+class EnsembleClassifier2(nn.Module):
+    def __init__(
+        self,
+        num_classes: int,
+        seq_len: int,
+        in_channels: int,
+        hid_dim: int = 128
+    ) -> None:
+        super().__init__()
+
+        
+        
+        self.basicconv1 = BasicConvClassifier(num_classes, seq_len, in_channels)
+        self.basicconv2 = BasicConvClassifier(num_classes, seq_len, in_channels)
+
+        self.lstm = LSTMclassifier(num_classes, seq_len, in_channels, embdim=300)
+
+        self.spectrum = SpectrumMLPClassifier(num_classes, seq_len, in_channels)
+
+        self.mlp1 = nn.Linear(num_classes*4, num_classes*2)
+        self.mlp2 = nn.Linear(num_classes*2, num_classes)
+        self.mlp3 = nn.Linear(num_classes, num_classes)
+
+        self.batchnorm0 = nn.BatchNorm1d(num_features=num_classes*2)
+        self.batchnorm1 = nn.BatchNorm1d(num_features=num_classes)
+
+        
+
+    def forward(self, X: torch.Tensor) -> torch.Tensor:
+
+        X1 = self.basicconv1(X)
+        X2 = self.basicconv2(X)
+        X3 = self.lstm(X)
+        X4 = self.spectrum(X)
+
+        Y = torch.cat((X1, X2, X3, X4), dim=1)
+
+        Y = self.mlp1(Y)
+        Y = F.gelu(self.batchnorm0(Y))
+
+        Y = self.mlp2(Y)
+        Y = F.gelu(self.batchnorm1(Y))
+
+        Y = self.mlp3(Y)
+
+        return Y
