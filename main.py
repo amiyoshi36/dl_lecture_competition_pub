@@ -17,6 +17,7 @@ from src.models import SpectrogramCNNClassifier
 from src.models import SpectrumMLPClassifier
 from src.models import LSTMclassifier
 from src.models import EnsembleClassifier
+from src.models import BasicConvClassifier2
 from src.utils import set_seed
 
 # for models other than CLIP

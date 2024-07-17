@@ -22,6 +22,7 @@ from src.models import TransformerClassifier
 #from src.models import butter_bandpass_filter
 #from src.models import scale_signal
 #from src.models import baseline_correction
+from src.models import BasicConvClassifier2
 from src.utils import set_seed
 
 # for models other than CLIP
@@ -112,6 +113,10 @@ def run(args: DictConfig):
         ).to(args.device)
     if args.model == "TransformerClassifier":
         model = TransformerClassifier(
+            train_set.num_classes, train_set.seq_len, train_set.num_channels
+        ).to(args.device)
+    if args.model == "BasicConvClassifier2":
+        model = BasicConvClassifier2(
             train_set.num_classes, train_set.seq_len, train_set.num_channels
         ).to(args.device)
     # ------------------
