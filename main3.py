@@ -26,6 +26,7 @@ from src.models import BasicConvClassifier2
 from src.models import BasicConvClassifier5
 from src.models import EnsembleClassifier2
 from src.models import BasicConvClassifier_plus
+from src.models import BasicConvClassifier_plus1
 from src.utils import set_seed
 
 # for models other than CLIP
@@ -132,6 +133,10 @@ def run(args: DictConfig):
         ).to(args.device)
     if args.model == "BasicConvClassifier_plus":
         model = BasicConvClassifier_plus(
+            train_set.num_classes, train_set.seq_len, train_set.num_channels
+        ).to(args.device)
+    if args.model == "BasicConvClassifier_plus1":
+        model = BasicConvClassifier_plus1(
             train_set.num_classes, train_set.seq_len, train_set.num_channels
         ).to(args.device)
     # ------------------
