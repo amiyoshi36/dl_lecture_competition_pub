@@ -71,6 +71,10 @@ def run(args: DictConfig):
         model = EnsembleClassifier(
             train_set.num_classes, train_set.seq_len, train_set.num_channels
         ).to(args.device)
+    if args.model == "BasicConvClassifier2":
+        model = BasicConvClassifier2(
+            train_set.num_classes, train_set.seq_len, train_set.num_channels
+        ).to(args.device)
     # ------------------
     #     Optimizer
     # ------------------
