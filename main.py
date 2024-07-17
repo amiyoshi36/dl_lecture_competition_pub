@@ -150,14 +150,14 @@ def run(args: DictConfig):
         if args.use_wandb:
             wandb.log({"train_loss": np.mean(train_loss), "train_acc": np.mean(train_acc), "val_loss": np.mean(val_loss), "val_acc": np.mean(val_acc)})
         
-        #if np.mean(val_acc) > max_val_acc:
-        #    cprint("New best.", "cyan")
-        #    torch.save(model.state_dict(), os.path.join(logdir, "model_best.pt"))
-        #    max_val_acc = np.mean(val_acc)
-        if np.mean(val_loss) < min_val_loss:
+        if np.mean(val_acc) > max_val_acc:
             cprint("New best.", "cyan")
             torch.save(model.state_dict(), os.path.join(logdir, "model_best.pt"))
-            min_val_loss = np.mean(val_loss)
+            max_val_acc = np.mean(val_acc)
+        #if np.mean(val_loss) < min_val_loss:
+        #    cprint("New best.", "cyan")
+        #    torch.save(model.state_dict(), os.path.join(logdir, "model_best.pt"))
+        #   min_val_loss = np.mean(val_loss)
             
     
     # ----------------------------------
