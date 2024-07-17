@@ -738,3 +738,50 @@ class BasicConvClassifier_plus1(nn.Module):
 
 
         return self.head(X)
+
+
+
+class BasicConvClassifier_plus2(nn.Module):
+    def __init__(
+        self,
+        num_classes: int,
+        seq_len: int,
+        in_channels: int,
+        hid_dim: int = 128
+    ) -> None:
+        super().__init__()
+
+        self.block1 = ConvBlock(in_channels, hid_dim)
+        self.block2 = ConvBlock(hid_dim, hid_dim)
+        self.block3 = ConvBlock(hid_dim, hid_dim)
+        self.block4 = ConvBlock(hid_dim, hid_dim)
+
+        self.batchnorm = nn.BatchNorm1d(hid_dim)
+        self.dropout = nn.Dropout(p=0.2)
+        
+
+        
+
+        self.head = nn.Sequential(
+            nn.AdaptiveAvgPool1d(1),
+            Rearrange("b d 1 -> b d"),
+            nn.Linear(hid_dim, num_classes),
+        )
+
+    def forward(self, X: torch.Tensor) -> torch.Tensor:
+        """_summary_
+        Args:
+            X ( b, c, t ): _description_
+        Returns:
+            X ( b, num_classes ): _description_
+        """
+        X = self.block1(X)
+        X = self.block2(X) + X
+        X = self.block3(X) + X
+        X = self.batchnorm(X)
+        X = self.block4(X)
+
+        X = self.dropout(X)
+
+
+        return self.head(X)
