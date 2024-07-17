@@ -16,6 +16,7 @@ from src.models import SpectrogramResNetClassifier
 from src.models import SpectrogramCNNClassifier
 from src.models import SpectrumMLPClassifier
 from src.models import LSTMclassifier
+from src.models import EnsembleClassifier
 from src.utils import set_seed
 
 # for models other than CLIP
@@ -65,6 +66,10 @@ def run(args: DictConfig):
     if args.model == "LSTMclassifier":
         model = LSTMclassifier(
             train_set.num_classes, train_set.seq_len, train_set.num_channels, embdim=args.embdim
+        ).to(args.device)
+    if args.model == "EnsembleClassifier":
+        model = EnsembleClassifier(
+            train_set.num_classes, train_set.seq_len, train_set.num_channels
         ).to(args.device)
     # ------------------
     #     Optimizer
