@@ -109,6 +109,7 @@ def run(args: DictConfig):
     #   Start training
     # ------------------  
     max_val_acc = 0
+    min_val_loss = 10000
     accuracy = Accuracy(
         task="multiclass", num_classes=train_set.num_classes, top_k=10
     ).to(args.device)
@@ -149,10 +150,14 @@ def run(args: DictConfig):
         if args.use_wandb:
             wandb.log({"train_loss": np.mean(train_loss), "train_acc": np.mean(train_acc), "val_loss": np.mean(val_loss), "val_acc": np.mean(val_acc)})
         
-        if np.mean(val_acc) > max_val_acc:
+        #if np.mean(val_acc) > max_val_acc:
+        #    cprint("New best.", "cyan")
+        #    torch.save(model.state_dict(), os.path.join(logdir, "model_best.pt"))
+        #    max_val_acc = np.mean(val_acc)
+        if np.mean(val_loss) < min_val_loss:
             cprint("New best.", "cyan")
             torch.save(model.state_dict(), os.path.join(logdir, "model_best.pt"))
-            max_val_acc = np.mean(val_acc)
+            min_val_loss = np.mean(val_loss)
             
     
     # ----------------------------------
