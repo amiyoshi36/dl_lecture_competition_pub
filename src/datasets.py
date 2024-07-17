@@ -123,36 +123,6 @@ class ThingsMEGDataset_2(torch.utils.data.Dataset):  # load images too
 
 
 
-import scipy.signal
-from sklearn.preprocessing import StandardScaler
-
-# リサンプリング
-def resample_signal(signal, orig_sr, target_sr):
-    duration = signal.shape[-1] / orig_sr
-    new_length = int(duration * target_sr)
-    resampled_signal = scipy.signal.resample(signal, new_length, axis=-1)
-    return resampled_signal
-
-# フィルタリング
-def butter_bandpass_filter(data, lowcut, highcut, fs, order=5):
-    nyquist = 0.5 * fs
-    low = lowcut / nyquist
-    high = highcut / nyquist
-    b, a = scipy.signal.butter(order, [low, high], btype='band')
-    y = scipy.signal.lfilter(b, a, data)
-    return y
-
-# スケーリング
-def scale_signal(signal):
-    scaler = StandardScaler()
-    scaled_signal = scaler.fit_transform(signal)
-    return scaled_signal
-
-# ベースライン補正
-def baseline_correction(signal):
-    mean_baseline = np.mean(signal, axis=-1, keepdims=True)
-    corrected_signal = signal - mean_baseline
-    return corrected_signal
 
 class ThingsMEGDataset_3(torch.utils.data.Dataset):  # imageなし、前処理あり
     def __init__(self, split: str, data_dir: str = "data") -> None:
