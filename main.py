@@ -20,9 +20,11 @@ from src.models import EnsembleClassifier
 from src.models import BasicConvClassifier2
 from src.models import BasicConvClassifier5
 from src.models import EnsembleClassifier2
+from src.models import BasicConvClassifier_plus
 from src.utils import set_seed
 
 # for models other than CLIP
+BasicConvClassifier_plus
 
 @hydra.main(version_base=None, config_path="configs", config_name="config")  # configsにあるconfig.yamlを読み込む。
 def run(args: DictConfig):
@@ -84,6 +86,10 @@ def run(args: DictConfig):
         ).to(args.device)
     if args.model == "EnsembleClassifier2":
         model = EnsembleClassifier2(
+            train_set.num_classes, train_set.seq_len, train_set.num_channels
+        ).to(args.device)
+    if args.model == "BasicConvClassifier_plus":
+        model = BasicConvClassifier_plus(
             train_set.num_classes, train_set.seq_len, train_set.num_channels
         ).to(args.device)
     # ------------------
