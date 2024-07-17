@@ -411,6 +411,53 @@ class LSTMclassifier(nn.Module):
 
 
 
+
+
+class LSTMclassifier(nn.Module):
+    def __init__(
+        self,
+        num_classes: int,
+        seq_len: int,
+        in_channels: int,
+        embdim: int,         ##
+    ) -> None:
+        super().__init__()
+
+
+        self.lstm = nn.LSTM(in_channels, embdim, num_layers=2, batch_first=True, dropout=0.5, bidirectional=True)
+
+        self.embdim = embdim
+
+        self.mlp = nn.Sequential(
+            nn.Linear(embdim*2, embdim),
+            nn.ReLU(inplace=True),
+            nn.Linear(embdim, num_classes),
+            nn.Dropout(0.25),
+            nn.LayerNorm(num_classes)
+        )
+
+
+
+    def forward(self, X: torch.Tensor) -> torch.Tensor:
+
+        X = X.permute(0,2,1)  # (batch_size, num_channels, seq_len) --> (batch_size, seq_len, num_channels) 
+
+        out, (hn, cn) = self.lstm(X)
+
+        hn_forward_last = hn[-2]  # 最後の層の前方向隠れ状態
+        hn_backward_last = hn[-1]  # 最後の層の後方向隠れ状態
+
+        MEG_embeddings = torch.cat((hn_forward_last, hn_backward_last), dim=1)
+
+        #MEG_embeddings = hn[-1]
+        
+
+
+        return self.mlp(MEG_embeddings)
+
+
+
+
 class EnsembleClassifier(nn.Module):
     def __init__(
         self,
@@ -423,7 +470,7 @@ class EnsembleClassifier(nn.Module):
 
         self.BasicConvClassifier = BasicConvClassifier(num_classes, seq_len, in_channels, hid_dim=128)
         self.LSTMclassifier = LSTMclassifier(num_classes, seq_len, in_channels, embdim=500)
-        self.MEGencoder = BasicConvClassifier(num_classes, seq_len, in_channels, hid_dim=128)
+        #self.MEGencoder = BasicConvClassifier(num_classes, seq_len, in_channels, hid_dim=128)
         
         # 学習済みモデルをload
         self.BasicConvClassifier.load_state_dict(torch.load("outputs/2024-07-08/01-03-43/model_best.pt", map_location="cuda:0"))
@@ -431,38 +478,77 @@ class EnsembleClassifier(nn.Module):
         #self.MEGencoder.load_state_dict(torch.load("outputs/2024-07-17/05-18-34/model_MEGencoder_best.pt", map_location="cuda:0"))
         
         # state_dictのキーを調整してロード
-        state_dict = torch.load("outputs/2024-07-17/05-18-34/model_MEGencoder_best.pt", map_location="cuda:0")
-        new_state_dict = {}
-        for k, v in state_dict.items():
-            new_key = k.replace("MEGencoder.", "")
-            new_state_dict[new_key] = v
-        self.MEGencoder.load_state_dict(new_state_dict)
+        #state_dict = torch.load("outputs/2024-07-17/05-18-34/model_MEGencoder_best.pt", map_location="cuda:0")
+        #new_state_dict = {}
+        #for k, v in state_dict.items():
+        #    new_key = k.replace("MEGencoder.", "")
+        #    new_state_dict[new_key] = v
+        #self.MEGencoder.load_state_dict(new_state_dict)
 
         # パラメータを固定
         for param in self.BasicConvClassifier.parameters():
             param.requires_grad = False
         for param in self.LSTMclassifier.parameters():
             param.requires_grad = False
-        for param in self.MEGencoder.parameters():
-            param.requires_grad = False
+        #for param in self.MEGencoder.parameters():
+        #    param.requires_grad = False
 
         # MLPを定義
 
         self.mlp1 = nn.Sequential(
-            nn.Linear(num_classes+num_classes+300, 4000),
-            nn.BatchNorm1d(num_features=4000),
+            #nn.Linear(num_classes+num_classes+300, 4000),
+            nn.Linear(num_classes+num_classes, num_classes+num_classes),
+            nn.BatchNorm1d(num_features=num_classes+num_classes),
             nn.ReLU(),
             nn.Dropout(0.5),
-            nn.Linear(4000, num_classes)
+            nn.Linear(num_classes+num_classes, num_classes+num_classes)
         )
         self.mlp2 = nn.Sequential(
-            nn.LayerNorm(num_classes),
-            nn.Linear(num_classes, 2000),
+            nn.LayerNorm(num_classes+num_classes),
+            nn.Linear(num_classes+num_classes, 2000),
             nn.BatchNorm1d(num_features=2000),
             nn.ReLU(),
             nn.Dropout(0.5),
             nn.Linear(2000, num_classes)
         )
+
+
+
+    def forward(self, X: torch.Tensor) -> torch.Tensor:
+
+        X1 = self.BasicConvClassifier(X)  # output: (batch, num_classes)
+        X2 = self.LSTMclassifier(X)  # output: (batch, num_classes)
+        #X3 = self.MEGencoder(X)  # output: (batch, 300)
+
+        #X = torch.cat((X1, X2, X3), dim=1)
+        X = torch.cat((X1, X2), dim=1)
+
+        Y = self.mlp1(X) + X  # skip connection
+        Z = self.mlp2(Y)
+
+
+        return Z
+
+
+"""
+
+class TransformerClassifier(nn.Module):
+    def __init__(
+        self,
+        num_classes: int,
+        seq_len: int,
+        in_channels: int,
+        emb_dim: int 128,         ##
+        n_heads: int 8,
+        n_layers: int 4
+    ) -> None:
+        super().__init__()
+
+        self.embedding = nn.Linear(num_channels, emb_dim)  # 入力チャンネル数から埋め込み次元に変換
+        encoder_layers = nn.TransformerEncoderLayer(d_model=emb_dim, nhead=n_heads, dropout=0.1)
+        self.transformer_encoder = nn.TransformerEncoder(encoder_layers, num_layers=n_layers)
+        
+        self.fc = nn.Linear(emb_dim, num_classes)  # 最後の全結合層
 
 
 
@@ -479,3 +565,5 @@ class EnsembleClassifier(nn.Module):
 
 
         return Z
+
+"""
