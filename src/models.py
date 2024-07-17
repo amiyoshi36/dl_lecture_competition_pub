@@ -647,14 +647,48 @@ class EnsembleClassifier2(nn.Module):
         X3 = self.lstm(X)
         X4 = self.spectrum(X)
 
-        Y = torch.cat((X1, X2, X3, X4), dim=1)
+        #Y = torch.cat((X1, X2, X3, X4), dim=1)
+        #Y = self.mlp1(Y)
+        #Y = F.gelu(self.batchnorm0(Y))
+        #Y = self.mlp2(Y)
+        #Y = F.gelu(self.batchnorm1(Y))
+        #Y = self.mlp3(Y)
 
-        Y = self.mlp1(Y)
-        Y = F.gelu(self.batchnorm0(Y))
-
-        Y = self.mlp2(Y)
-        Y = F.gelu(self.batchnorm1(Y))
-
-        Y = self.mlp3(Y)
+        Y = (X1+X2+X3+X4)
 
         return Y
+
+
+class BasicConvClassifier_plus(nn.Module):
+    def __init__(
+        self,
+        num_classes: int,
+        seq_len: int,
+        in_channels: int,
+        hid_dim: int = 128
+    ) -> None:
+        super().__init__()
+
+        self.blocks = nn.Sequential(
+            ConvBlock(in_channels, hid_dim),
+            ConvBlock(hid_dim, hid_dim),
+
+            ConvBlock(hid_dim, hid_dim),  # additional block
+        )
+
+        self.head = nn.Sequential(
+            nn.AdaptiveAvgPool1d(1),
+            Rearrange("b d 1 -> b d"),
+            nn.Linear(hid_dim, num_classes),
+        )
+
+    def forward(self, X: torch.Tensor) -> torch.Tensor:
+        """_summary_
+        Args:
+            X ( b, c, t ): _description_
+        Returns:
+            X ( b, num_classes ): _description_
+        """
+        X = self.blocks(X)
+
+        return self.head(X)
