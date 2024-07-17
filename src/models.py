@@ -428,8 +428,16 @@ class EnsembleClassifier(nn.Module):
         # 学習済みモデルをload
         self.BasicConvClassifier.load_state_dict(torch.load("outputs/2024-07-08/01-03-43/model_best.pt", map_location="cuda:0"))
         self.LSTMclassifier.load_state_dict(torch.load("outputs/2024-07-17/02-36-27/model_best.pt", map_location="cuda:0"))
-        self.MEGencoder.load_state_dict(torch.load("outputs/2024-07-17/05-18-34/model_MEGencoder_best.pt", map_location="cuda:0"))
+        #self.MEGencoder.load_state_dict(torch.load("outputs/2024-07-17/05-18-34/model_MEGencoder_best.pt", map_location="cuda:0"))
         
+        # state_dictのキーを調整してロード
+        state_dict = torch.load("outputs/2024-07-17/05-18-34/model_MEGencoder_best.pt", map_location="cuda:0")
+        new_state_dict = {}
+        for k, v in state_dict.items():
+            new_key = k.replace("MEGencoder.", "")
+            new_state_dict[new_key] = v
+        self.MEGencoder.load_state_dict(new_state_dict)
+
         # パラメータを固定
         for param in self.BasicConvClassifier.parameters():
             param.requires_grad = False
