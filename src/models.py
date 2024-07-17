@@ -501,9 +501,9 @@ class TransformerClassifier(nn.Module):
         num_classes: int,
         seq_len: int,
         in_channels: int,
-        emb_dim: int 128,         ##
-        n_heads: int 8,
-        n_layers: int 4
+        emb_dim: int = 128,         ##
+        n_heads: int = 8,
+        n_layers: int = 4
     ) -> None:
         super().__init__()
 
