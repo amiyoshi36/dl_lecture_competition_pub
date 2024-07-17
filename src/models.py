@@ -407,3 +407,67 @@ class LSTMclassifier(nn.Module):
 
 
         return self.mlp(MEG_embeddings)
+
+
+
+
+class EnsembleClassifier(nn.Module):
+    def __init__(
+        self,
+        num_classes: int,
+        seq_len: int,
+        in_channels: int,
+        embdim: int,         ##
+    ) -> None:
+        super().__init__()
+
+        self.BasicConvClassifier = BasicConvClassifier(num_classes, seq_len, in_channels, hid_dim=128)
+        self.LSTMclassifier = LSTMclassifier(num_classes, seq_len, num_channels, embdim=500)
+        self.MEGencoder = BasicConvClassifier(num_classes, seq_len, in_channels, hid_dim=128)
+        
+        # 学習済みモデルをload
+        self.BasicConvClassifier.load_state_dict(torch.load("outputs/2024-07-08/01-03-43/model_best.pt", map_location=args.device))
+        self.LSTMclassifier.load_state_dict(torch.load("outputs/2024-07-17/02-36-27/model_best.pt", map_location=args.device))
+        self.MEGencoder.load_state_dict(torch.load("outputs/2024-07-17/05-18-34/model_MEGencoder_best.pt", map_location=args.device))
+        
+        # パラメータを固定
+        for param in self.BasicConvClassifier.parameters():
+            param.requires_grad = False
+        for param in self.lstm.parameters():
+            param.requires_grad = False
+        for param in self.MEGencoder.parameters():
+            param.requires_grad = False
+
+        # MLPを定義
+
+        self.mlp1 = nn.Sequential(
+            nn.Linear(num_classes+num_classes+300, 4000),
+            nn.BatchNorm1d(num_features=4000),
+            nn.ReLU(),
+            nn.Dropout(0.5),
+            nn.Linear(4000, num_classes)
+        )
+        self.mlp2 = nn.Sequential(
+            nn.LayerNorm(num_classes),
+            nn.Linear(num_classes, 2000),
+            nn.BatchNorm1d(num_features=2000),
+            nn.ReLU(),
+            nn.Dropout(0.5),
+            nn.Linear(2000, num_classes)
+        )
+
+
+
+    def forward(self, X: torch.Tensor) -> torch.Tensor:
+
+        X1 = self.BasicConvClassifier(X)  # output: (batch, num_classes)
+        X2 = self.LSTMclassifier(X)  # output: (batch, num_classes)
+        X3 = self.MEGencoder(X)  # output: (batch, 300)
+
+        X = torch.cat((X1, X2, X3), dim=1)
+
+        Y = self.mlp1(X) + X  # skip connection
+        Z = self.mlp2(Y)
+
+
+        return Z
