@@ -181,7 +181,7 @@ class ThingsMEGDataset_3(torch.utils.data.Dataset):  # imageなし、前処理�
         Xi = self.X[i].numpy()
         #Xi = resample_signal(Xi, self.orig_sr, self.target_sr)  # リサンプリング
         #Xi = butter_bandpass_filter(Xi, lowcut=0.5, highcut=40.0, fs=self.target_sr)  # フィルタリング
-        Xi = scale_signal(Xi)  # スケーリング
+        #Xi = scale_signal(Xi)  # スケーリング
         Xi = baseline_correction(Xi)    # ベースライン補正
         Xi = torch.tensor(Xi, dtype=torch.float32)  # numpy to tensor
         if hasattr(self, "y"):
