@@ -17,6 +17,7 @@ from src.models import SpectrogramCNNClassifier
 from src.models import SpectrumMLPClassifier
 from src.models import LSTMclassifier
 from src.models import EnsembleClassifier
+from src.models import TransformerClassifier
 #from src.models import resample_signal
 #from src.models import butter_bandpass_filter
 #from src.models import scale_signal
@@ -107,6 +108,10 @@ def run(args: DictConfig):
         ).to(args.device)
     if args.model == "EnsembleClassifier":
         model = EnsembleClassifier(
+            train_set.num_classes, train_set.seq_len, train_set.num_channels
+        ).to(args.device)
+    if args.model == "TransformerClassifier":
+        model = TransformerClassifier(
             train_set.num_classes, train_set.seq_len, train_set.num_channels
         ).to(args.device)
     # ------------------
