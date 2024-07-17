@@ -164,7 +164,7 @@ class ThingsMEGDataset_3(torch.utils.data.Dataset):  # imageなし、前処理�
         self.num_classes = 1854
 
         self.orig_sr = 200  # 元のサンプリングレート
-        self.target_sr = 400  # アップサンプリング
+        self.target_sr = 800  # アップサンプリング
         
         self.X = torch.load(os.path.join(data_dir, f"{split}_X.pt"))
 
