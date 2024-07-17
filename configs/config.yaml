@@ -17,3 +17,5 @@ model: EnsembleClassifier  #LSTMclassifier  #CLIP  #SpectrumMLPClassifier  #Spec
 
 # embedding dim for CLIP
 embdim: 300
+
+optimizer: Adam
