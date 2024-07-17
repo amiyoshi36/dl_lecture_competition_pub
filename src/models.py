@@ -306,9 +306,13 @@ class MEGencoder(nn.Module):
 
 
         #self.MEGencoder = nn.LSTM(in_channels, embdim, num_layers=2, batch_first=True)
-        self.MEGencoder = BasicConvClassifier(num_classes, seq_len, in_channels, hid_dim=128)
+        #self.MEGencoder = BasicConvClassifier(num_classes, seq_len, in_channels, hid_dim=128)
+        self.megencoder = BasicConvClassifier(num_classes, seq_len, in_channels, hid_dim=128)
+        #self.megencoder = TransformerClassifier(num_classes, seq_len, in_chunnels)  # num_classesがTransformerClassifierの出力の次元数になる。
 
-        self.MEGMLP = nn.Sequential(
+
+
+        self.megmlp = nn.Sequential(
             nn.Linear(num_classes, embdim),
             nn.ReLU(inplace=True),
             nn.Linear(embdim, embdim),
@@ -324,9 +328,9 @@ class MEGencoder(nn.Module):
         #out, (hn, cn) = self.MEGencoder(X)
         #MEG_embeddings = hn[-1]
 
-        MEG_embeddings = self.MEGencoder(X)
+        MEG_embeddings = self.megencoder(X)
 
-        MEG_embeddings = self.MEGMLP(MEG_embeddings)
+        MEG_embeddings = self.megmlp(MEG_embeddings)
 
         return MEG_embeddings
 
@@ -366,47 +370,6 @@ class MEGclassifier(nn.Module):
 #################
 
 
-class LSTMclassifier(nn.Module):
-    def __init__(
-        self,
-        num_classes: int,
-        seq_len: int,
-        in_channels: int,
-        embdim: int,         ##
-    ) -> None:
-        super().__init__()
-
-
-        self.lstm = nn.LSTM(in_channels, embdim, num_layers=2, batch_first=True, dropout=0.5, bidirectional=True)
-
-        self.embdim = embdim
-
-        self.mlp = nn.Sequential(
-            nn.Linear(embdim*2, embdim),
-            nn.ReLU(inplace=True),
-            nn.Linear(embdim, num_classes),
-            nn.Dropout(0.25),
-            nn.LayerNorm(num_classes)
-        )
-
-
-
-    def forward(self, X: torch.Tensor) -> torch.Tensor:
-
-        X = X.permute(0,2,1)  # (batch_size, num_channels, seq_len) --> (batch_size, seq_len, num_channels) 
-
-        out, (hn, cn) = self.lstm(X)
-
-        hn_forward_last = hn[-2]  # 最後の層の前方向隠れ状態
-        hn_backward_last = hn[-1]  # 最後の層の後方向隠れ状態
-
-        MEG_embeddings = torch.cat((hn_forward_last, hn_backward_last), dim=1)
-
-        #MEG_embeddings = hn[-1]
-        
-
-
-        return self.mlp(MEG_embeddings)
 
 
 
@@ -530,7 +493,7 @@ class EnsembleClassifier(nn.Module):
         return Z
 
 
-"""
+
 
 class TransformerClassifier(nn.Module):
     def __init__(
@@ -544,26 +507,33 @@ class TransformerClassifier(nn.Module):
     ) -> None:
         super().__init__()
 
-        self.embedding = nn.Linear(num_channels, emb_dim)  # 入力チャンネル数から埋め込み次元に変換
+        self.embedding = nn.Linear(in_channels, emb_dim)  # 入力チャンネル数から埋め込み次元に変換
         encoder_layers = nn.TransformerEncoderLayer(d_model=emb_dim, nhead=n_heads, dropout=0.1)
         self.transformer_encoder = nn.TransformerEncoder(encoder_layers, num_layers=n_layers)
         
-        self.fc = nn.Linear(emb_dim, num_classes)  # 最後の全結合層
+        #self.fc = nn.Linear(emb_dim, num_classes)  # 最後の全結合層
+
+        self.mlp = nn.Sequential(
+            nn.Linear(emb_dim, num_classes),
+            nn.BatchNorm1d(num_features=num_classes),
+            nn.ReLU(),
+            nn.Dropout(0.5),
+            nn.Linear(num_classes, num_classes)
+        )
 
 
+    def forward(self, X: torch.Tensor):
+        X = X .permute(0, 2, 1)  # (batch_size, in_channels, seq_len) --> (batch_size, seq_len, in_channels)
+        X = self.embedding(X)  # (batch_size, seq_len, emb_dim)
+        X = X.permute(1, 0, 2)  # Transformerのために次元を変換 (seq_len, batch_size, emb_dim)
+        
+        # Transformerエンコーダを通す
+        X = self.transformer_encoder(X)  # (seq_len, batch_size, emb_dim)
+        
+        # 最後のタイムステップの出力を取得
+        X = X[-1, :, :]  # (batch_size, emb_dim)
+        
+        # 分類用の全結合層を適用
+        X = self.mlp(X)  # (batch_size, num_classes)
+        return X
 
-    def forward(self, X: torch.Tensor) -> torch.Tensor:
-
-        X1 = self.BasicConvClassifier(X)  # output: (batch, num_classes)
-        X2 = self.LSTMclassifier(X)  # output: (batch, num_classes)
-        X3 = self.MEGencoder(X)  # output: (batch, 300)
-
-        X = torch.cat((X1, X2, X3), dim=1)
-
-        Y = self.mlp1(X) + X  # skip connection
-        Z = self.mlp2(Y)
-
-
-        return Z
-
-"""
