@@ -370,12 +370,12 @@ class LSTMclassifier(nn.Module):
         super().__init__()
 
 
-        self.lstm = nn.LSTM(in_channels, embdim, num_layers=2, batch_first=True, dropout=0.5)
+        self.lstm = nn.LSTM(in_channels, embdim, num_layers=2, batch_first=True, dropout=0.5, bidirectional=True)
 
         self.embdim = embdim
 
         self.mlp = nn.Sequential(
-            nn.Linear(embdim, embdim),
+            nn.Linear(embdim*2, embdim),
             nn.ReLU(inplace=True),
             nn.Linear(embdim, num_classes),
             nn.Dropout(0.25),
@@ -389,8 +389,14 @@ class LSTMclassifier(nn.Module):
         X = X.permute(0,2,1)  # (batch_size, num_channels, seq_len) --> (batch_size, seq_len, num_channels) 
 
         out, (hn, cn) = self.lstm(X)
+
+        hn_forward_last = hn[-2]  # 最後の層の前方向隠れ状態
+        hn_backward_last = hn[-1]  # 最後の層の後方向隠れ状態
+
+        MEG_embeddings = torch.cat((hn_forward_last, hn_backward_last), dim=1)
+
         #MEG_embeddings = hn[-1]
-        MEG_embeddings = hn.view(-1, self.embdim)  # ??
+        
 
 
         return self.mlp(MEG_embeddings)
