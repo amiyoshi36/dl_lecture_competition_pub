@@ -255,7 +255,7 @@ class SpectrumMLPClassifier(nn.Module):
 
 
 #################
-#  CLIP
+#  CLIP -->
 #################
 
 
@@ -305,10 +305,11 @@ class MEGencoder(nn.Module):
         super().__init__()
 
 
-        self.MEGencoder = nn.LSTM(in_channels, embdim, num_layers=2, batch_first=True)
+        #self.MEGencoder = nn.LSTM(in_channels, embdim, num_layers=2, batch_first=True)
+        self.MEGencoder = BasicConvClassifier(num_classes, seq_len, in_channels, hid_dim=128)
 
         self.MEGMLP = nn.Sequential(
-            nn.Linear(embdim, embdim),
+            nn.Linear(num_classes, embdim),
             nn.ReLU(inplace=True),
             nn.Linear(embdim, embdim),
             nn.Dropout(0.25),
@@ -319,14 +320,17 @@ class MEGencoder(nn.Module):
 
     def forward(self, X: torch.Tensor) -> torch.Tensor:
 
-        X = X.permute(0,2,1)  # (batch_size, num_channels, seq_len) --> (batch_size, seq_len, num_channels) 
+        #X = X.permute(0,2,1)  # (batch_size, num_channels, seq_len) --> (batch_size, seq_len, num_channels) 
+        #out, (hn, cn) = self.MEGencoder(X)
+        #MEG_embeddings = hn[-1]
 
-        out, (hn, cn) = self.MEGencoder(X)
-        MEG_embeddings = hn[-1]
+        MEG_embeddings = self.MEGencoder(X)
 
         MEG_embeddings = self.MEGMLP(MEG_embeddings)
 
         return MEG_embeddings
+
+
 
 
 
@@ -357,6 +361,9 @@ class MEGclassifier(nn.Module):
         return self.classifier(MEG_embeddings)
 
 
+#################
+#  <--  CLIP 
+#################
 
 
 class LSTMclassifier(nn.Module):
