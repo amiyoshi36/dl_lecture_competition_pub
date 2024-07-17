@@ -426,9 +426,9 @@ class EnsembleClassifier(nn.Module):
         self.MEGencoder = BasicConvClassifier(num_classes, seq_len, in_channels, hid_dim=128)
         
         # 学習済みモデルをload
-        self.BasicConvClassifier.load_state_dict(torch.load("outputs/2024-07-08/01-03-43/model_best.pt", map_location=args.device))
-        self.LSTMclassifier.load_state_dict(torch.load("outputs/2024-07-17/02-36-27/model_best.pt", map_location=args.device))
-        self.MEGencoder.load_state_dict(torch.load("outputs/2024-07-17/05-18-34/model_MEGencoder_best.pt", map_location=args.device))
+        self.BasicConvClassifier.load_state_dict(torch.load("outputs/2024-07-08/01-03-43/model_best.pt", map_location="cuda:0"))
+        self.LSTMclassifier.load_state_dict(torch.load("outputs/2024-07-17/02-36-27/model_best.pt", map_location="cuda:0"))
+        self.MEGencoder.load_state_dict(torch.load("outputs/2024-07-17/05-18-34/model_MEGencoder_best.pt", map_location="cuda:0"))
         
         # パラメータを固定
         for param in self.BasicConvClassifier.parameters():
