@@ -18,6 +18,7 @@ from src.models import SpectrumMLPClassifier
 from src.models import LSTMclassifier
 from src.models import EnsembleClassifier
 from src.models import BasicConvClassifier2
+from src.models import BasicConvClassifier5
 from src.utils import set_seed
 
 # for models other than CLIP
@@ -76,10 +77,17 @@ def run(args: DictConfig):
         model = BasicConvClassifier2(
             train_set.num_classes, train_set.seq_len, train_set.num_channels
         ).to(args.device)
+    if args.model == "BasicConvClassifier5":
+        model = BasicConvClassifier5(
+            train_set.num_classes, train_set.seq_len, train_set.num_channels
+        ).to(args.device)
     # ------------------
     #     Optimizer
     # ------------------
-    optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
+    if args.optimizer == "Adam":
+        optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
+    if args.optimizer == "AdamW":
+        optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
 
     # ------------------
     #   Start training
