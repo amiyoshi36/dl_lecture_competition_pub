@@ -627,16 +627,19 @@ class EnsembleClassifier2(nn.Module):
         self.basicconv1 = BasicConvClassifier(num_classes, seq_len, in_channels)
         self.basicconv2 = BasicConvClassifier(num_classes, seq_len, in_channels)
 
-        self.lstm = LSTMclassifier(num_classes, seq_len, in_channels, embdim=300)
+        #self.lstm = LSTMclassifier(num_classes, seq_len, in_channels, embdim=300)
+        #self.spectrum = SpectrumMLPClassifier(num_classes, seq_len, in_channels)
 
-        self.spectrum = SpectrumMLPClassifier(num_classes, seq_len, in_channels)
+        self.basicconv_plus = BasicConvClassifier_plus(num_classes, seq_len, in_channels)
+        self.basicconv_plus1 = BasicConvClassifier_plus1(num_classes, seq_len, in_channels)
 
-        self.mlp1 = nn.Linear(num_classes*4, num_classes*2)
-        self.mlp2 = nn.Linear(num_classes*2, num_classes)
-        self.mlp3 = nn.Linear(num_classes, num_classes)
 
-        self.batchnorm0 = nn.BatchNorm1d(num_features=num_classes*2)
-        self.batchnorm1 = nn.BatchNorm1d(num_features=num_classes)
+        #self.mlp1 = nn.Linear(num_classes*4, num_classes*2)
+        #self.mlp2 = nn.Linear(num_classes*2, num_classes)
+        #self.mlp3 = nn.Linear(num_classes, num_classes)
+
+        #self.batchnorm0 = nn.BatchNorm1d(num_features=num_classes*2)
+        #self.batchnorm1 = nn.BatchNorm1d(num_features=num_classes)
 
         
 
@@ -644,8 +647,10 @@ class EnsembleClassifier2(nn.Module):
 
         X1 = self.basicconv1(X)
         X2 = self.basicconv2(X)
-        X3 = self.lstm(X)
-        X4 = self.spectrum(X)
+        #X3 = self.lstm(X)
+        #X4 = self.spectrum(X)
+        X5 = self.basicconv_plus(X)
+        X6 = self.basicconv_plus1(X)
 
         #Y = torch.cat((X1, X2, X3, X4), dim=1)
         #Y = self.mlp1(Y)
@@ -654,7 +659,8 @@ class EnsembleClassifier2(nn.Module):
         #Y = F.gelu(self.batchnorm1(Y))
         #Y = self.mlp3(Y)
 
-        Y = (X1+X2+X3+X4)
+        #Y = (X1+X2+X3+X4+X5+X6)
+        Y = (X1+X2+X5+X6)
 
         return Y
 
@@ -680,6 +686,45 @@ class BasicConvClassifier_plus(nn.Module):
             nn.AdaptiveAvgPool1d(1),
             Rearrange("b d 1 -> b d"),
             nn.Linear(hid_dim, num_classes),
+        )
+
+    def forward(self, X: torch.Tensor) -> torch.Tensor:
+        """_summary_
+        Args:
+            X ( b, c, t ): _description_
+        Returns:
+            X ( b, num_classes ): _description_
+        """
+        X = self.blocks(X)
+
+        return self.head(X)
+
+
+
+class BasicConvClassifier_plus1(nn.Module):
+    def __init__(
+        self,
+        num_classes: int,
+        seq_len: int,
+        in_channels: int,
+        hid_dim: int = 128
+    ) -> None:
+        super().__init__()
+
+        self.blocks = nn.Sequential(
+            ConvBlock(in_channels, hid_dim),
+            ConvBlock(hid_dim, hid_dim),
+
+            ConvBlock(hid_dim, hid_dim),  # additional block
+        )
+
+        self.head = nn.Sequential(
+            nn.AdaptiveAvgPool1d(1),
+            Rearrange("b d 1 -> b d"),
+            nn.Linear(hid_dim, num_classes),
+            nn.BatchNorm1d(num_features=num_classes),
+            nn.ReLU(inplace=True),
+            nn.Linear(num_classes, num_classes), 
         )
 
     def forward(self, X: torch.Tensor) -> torch.Tensor:
