@@ -19,6 +19,7 @@ from src.models import LSTMclassifier
 from src.models import EnsembleClassifier
 from src.models import BasicConvClassifier2
 from src.models import BasicConvClassifier5
+from src.models import EnsembleClassifier2
 from src.utils import set_seed
 
 # for models other than CLIP
@@ -79,6 +80,10 @@ def run(args: DictConfig):
         ).to(args.device)
     if args.model == "BasicConvClassifier5":
         model = BasicConvClassifier5(
+            train_set.num_classes, train_set.seq_len, train_set.num_channels
+        ).to(args.device)
+    if args.model == "EnsembleClassifier2":
+        model = EnsembleClassifier2(
             train_set.num_classes, train_set.seq_len, train_set.num_channels
         ).to(args.device)
     # ------------------
