@@ -8,6 +8,7 @@ from omegaconf import DictConfig
 import wandb
 from termcolor import cprint
 from tqdm import tqdm
+import torch.nn as nn
 
 #from src.datasets import ThingsMEGDataset
 from src.datasets import ThingsMEGDataset_2
