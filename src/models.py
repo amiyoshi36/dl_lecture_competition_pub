@@ -841,7 +841,7 @@ class BasicConvClassifier_plus2_id(nn.Module):
         X = self.block1(X)
 
         onehot = F.one_hot(subject_idxs, num_classes=4)
-        X = onehot[0]*(self.block2_0(X) + X) + onehot[1]*(self.block2_1(X) + X) + onehot[2]*(self.block2_2(X) + X) + onehot[3]*(self.block2_3(X) + X)
+        X = onehot[0].repeat(281)*(self.block2_0(X) + X) + onehot[1].repeat(281)*(self.block2_1(X) + X) + onehot[2].repeat(281)*(self.block2_2(X) + X) + onehot[3].repeat(281)*(self.block2_3(X) + X)
 
         X = self.block3(X) + X
         X = self.batchnorm(X)
