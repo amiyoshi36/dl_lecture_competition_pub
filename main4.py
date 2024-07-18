@@ -137,7 +137,8 @@ def run(args: DictConfig):
         for X, y, subject_idxs in tqdm(train_loader, desc="Train"):
             X, y = X.to(args.device), y.to(args.device)
 
-            y_pred = model(X, subject_idxs)
+            #y_pred = model(X, subject_idxs)
+            y_pred = model(X)
             
             loss = F.cross_entropy(y_pred, y)
             train_loss.append(loss.item())
@@ -156,7 +157,8 @@ def run(args: DictConfig):
             X, y = X.to(args.device), y.to(args.device)
             
             with torch.no_grad():
-                y_pred = model(X, subject_idxs)
+                #y_pred = model(X, subject_idxs)
+                y_pred = model(X)
             
             val_loss.append(F.cross_entropy(y_pred, y).item())
             val_acc.append(accuracy(y_pred, y).item())
