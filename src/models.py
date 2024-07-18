@@ -807,20 +807,22 @@ class BasicConvClassifier_plus2_id(nn.Module):
         self.dropout = nn.Dropout(p=0.2)
         
 
-        
+        self.adaptiveavgpool1d = nn.AdaptiveAvgPool1d(1)
+        self.rearrange = Rearrange("b d 1 -> b d")
+        self.mlp = nn.Linear(hid_dim+4, num_classes)
 
-        self.head = nn.Sequential(
-            nn.AdaptiveAvgPool1d(1),
-            Rearrange("b d 1 -> b d"),
-            nn.Linear(hid_dim, num_classes),
-        )
+        #self.head = nn.Sequential(
+        #    nn.AdaptiveAvgPool1d(1),
+        #    Rearrange("b d 1 -> b d"),
+        #    nn.Linear(hid_dim, num_classes),
+        #)
 
-        self.mlp = nn.Sequential(
-            nn.Linear(num_classes+4, num_classes),
-            nn.BatchNorm1d(num_classes),
-            nn.ReLU(),
-            nn.Linear(num_classes, num_classes)
-            )
+        #self.mlp = nn.Sequential(
+        #    nn.Linear(num_classes+4, num_classes),
+        #    nn.BatchNorm1d(num_classes),
+        #    nn.ReLU(),
+        #    nn.Linear(num_classes, num_classes)
+        #    )
 
     def forward(self, X: torch.Tensor, subject_idxs: torch.Tensor) -> torch.Tensor:
         """_summary_
@@ -837,10 +839,13 @@ class BasicConvClassifier_plus2_id(nn.Module):
 
         X = self.dropout(X)
 
-        X = self.head(X)
+        X = self.adaptiveavgpool1d(X)
+        X = self.rearrange(X)
+        X = self.mlp(torch.cat((X, F.one_hot(subject_idxs, num_classes=4)), dim=1))
 
-        X = torch.cat((X, F.one_hot(subject_idxs, num_classes=4)), dim=1)
-        X = self.mlp(X)
+        #X = self.head(X)
+        #X = torch.cat((X, F.one_hot(subject_idxs, num_classes=4)), dim=1)
+        #X = self.mlp(X)
 
         #Y = torch.cat((X1, X2, X3, X4), dim=1)
         #Y = self.mlp1(Y)
