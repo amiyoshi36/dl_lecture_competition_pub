@@ -840,8 +840,25 @@ class BasicConvClassifier_plus2_id(nn.Module):
         """
         X = self.block1(X)
 
-        onehot = F.one_hot(subject_idxs, num_classes=4)
-        X = onehot[0].repeat(281)*(self.block2_0(X) + X) + onehot[1].repeat(281)*(self.block2_1(X) + X) + onehot[2].repeat(281)*(self.block2_2(X) + X) + onehot[3].repeat(281)*(self.block2_3(X) + X)
+        #onehot = F.one_hot(subject_idxs, num_classes=4)
+        #X = onehot[0].repeat(281)*(self.block2_0(X) + X) + onehot[1].repeat(281)*(self.block2_1(X) + X) + onehot[2].repeat(281)*(self.block2_2(X) + X) + onehot[3].repeat(281)*(self.block2_3(X) + X)
+
+        # Initialize an empty tensor to store the results
+        batch_size, _, seq_len = X.shape
+        result = torch.zeros_like(X)
+
+        # Apply the correct block based on subject_idxs
+        for i in range(batch_size):
+            if subject_idxs[i] == 0:
+                result[i] = self.block2_0(X[i].unsqueeze(0)) + X[i]
+            elif subject_idxs[i] == 1:
+                result[i] = self.block2_1(X[i].unsqueeze(0)) + X[i]
+            elif subject_idxs[i] == 2:
+                result[i] = self.block2_2(X[i].unsqueeze(0)) + X[i]
+            elif subject_idxs[i] == 3:
+                result[i] = self.block2_3(X[i].unsqueeze(0)) + X[i]
+
+        X = result
 
         X = self.block3(X) + X
         X = self.batchnorm(X)
