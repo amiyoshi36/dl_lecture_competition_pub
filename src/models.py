@@ -785,3 +785,69 @@ class BasicConvClassifier_plus2(nn.Module):
 
 
         return self.head(X)
+
+
+
+class BasicConvClassifier_plus2_id(nn.Module):
+    def __init__(
+        self,
+        num_classes: int,
+        seq_len: int,
+        in_channels: int,
+        hid_dim: int = 128
+    ) -> None:
+        super().__init__()
+
+        self.block1 = ConvBlock(in_channels, hid_dim)
+        self.block2 = ConvBlock(hid_dim, hid_dim)
+        self.block3 = ConvBlock(hid_dim, hid_dim)
+        self.block4 = ConvBlock(hid_dim, hid_dim)
+
+        self.batchnorm = nn.BatchNorm1d(hid_dim)
+        self.dropout = nn.Dropout(p=0.2)
+        
+
+        
+
+        self.head = nn.Sequential(
+            nn.AdaptiveAvgPool1d(1),
+            Rearrange("b d 1 -> b d"),
+            nn.Linear(hid_dim, num_classes),
+        )
+
+        self.mlp = nn.Sequential(
+            nn.Linear(num_classes+4, num_classes),
+            nn.BatchNorm1d(num_classes),
+            nn.ReLU(),
+            nn.Linear(num_classes, num_classes)
+            )
+
+    def forward(self, X: torch.Tensor, subject_idxs: torch.Tensor) -> torch.Tensor:
+        """_summary_
+        Args:
+            X ( b, c, t ): _description_
+        Returns:
+            X ( b, num_classes ): _description_
+        """
+        X = self.block1(X)
+        X = self.block2(X) + X
+        X = self.block3(X) + X
+        X = self.batchnorm(X)
+        X = self.block4(X)
+
+        X = self.dropout(X)
+
+        X = self.head(X)
+
+        X = torch.cat((X, F.one_hot(subject_idxs, num_classes=4)), dim=1)
+        X = self.mlp(X)
+
+        #Y = torch.cat((X1, X2, X3, X4), dim=1)
+        #Y = self.mlp1(Y)
+        #Y = F.gelu(self.batchnorm0(Y))
+        #Y = self.mlp2(Y)
+        #Y = F.gelu(self.batchnorm1(Y))
+        #Y = self.mlp3(Y)
+
+
+        return X
