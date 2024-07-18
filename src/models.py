@@ -799,7 +799,14 @@ class BasicConvClassifier_plus2_id(nn.Module):
         super().__init__()
 
         self.block1 = ConvBlock(in_channels, hid_dim)
-        self.block2 = ConvBlock(hid_dim, hid_dim)
+
+        self.block2_0 = ConvBlock(hid_dim, hid_dim)
+        self.block2_1 = ConvBlock(hid_dim, hid_dim)
+        self.block2_2 = ConvBlock(hid_dim, hid_dim)
+        self.block2_3 = ConvBlock(hid_dim, hid_dim)
+
+
+
         self.block3 = ConvBlock(hid_dim, hid_dim)
         self.block4 = ConvBlock(hid_dim, hid_dim)
 
@@ -809,7 +816,7 @@ class BasicConvClassifier_plus2_id(nn.Module):
 
         self.adaptiveavgpool1d = nn.AdaptiveAvgPool1d(1)
         self.rearrange = Rearrange("b d 1 -> b d")
-        self.mlp = nn.Linear(hid_dim+4, num_classes)
+        self.mlp = nn.Linear(hid_dim, num_classes)
 
         #self.head = nn.Sequential(
         #    nn.AdaptiveAvgPool1d(1),
@@ -832,7 +839,10 @@ class BasicConvClassifier_plus2_id(nn.Module):
             X ( b, num_classes ): _description_
         """
         X = self.block1(X)
-        X = self.block2(X) + X
+
+        onehot = F.one_hot(subject_idxs, num_classes=4)
+        X = onehot[0]*(self.block2_0(X) + X) + onehot[1]*(self.block2_1(X) + X) + onehot[2]*(self.block2_2(X) + X) + onehot[3]*(self.block2_3(X) + X)
+
         X = self.block3(X) + X
         X = self.batchnorm(X)
         X = self.block4(X)
@@ -841,7 +851,8 @@ class BasicConvClassifier_plus2_id(nn.Module):
 
         X = self.adaptiveavgpool1d(X)
         X = self.rearrange(X)
-        X = self.mlp(torch.cat((X, F.one_hot(subject_idxs, num_classes=4)), dim=1))
+        #X = self.mlp(torch.cat((X, F.one_hot(subject_idxs, num_classes=4)), dim=1))
+        X = self.mlp(X)
 
         #X = self.head(X)
         #X = torch.cat((X, F.one_hot(subject_idxs, num_classes=4)), dim=1)
