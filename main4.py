@@ -132,8 +132,10 @@ def run(args: DictConfig):
         train_loss, train_acc, val_loss, val_acc = [], [], [], []
         
         model.train()
+        #for X, y, subject_idxs in tqdm(train_loader, desc="Train"):
+        #    X, y, subject_idxs = X.to(args.device), y.to(args.device), subject_idxs.to(args.device)
         for X, y, subject_idxs in tqdm(train_loader, desc="Train"):
-            X, y, subject_idxs = X.to(args.device), y.to(args.device), subject_idxs.to(args.device)
+            X, y = X.to(args.device), y.to(args.device)
 
             y_pred = model(X, subject_idxs)
             
@@ -148,8 +150,10 @@ def run(args: DictConfig):
             train_acc.append(acc.item())
 
         model.eval()
+        #for X, y, subject_idxs in tqdm(val_loader, desc="Validation"):
+        #    X, y, subject_idxs = X.to(args.device), y.to(args.device), subject_idxs.to(args.device)
         for X, y, subject_idxs in tqdm(val_loader, desc="Validation"):
-            X, y, subject_idxs = X.to(args.device), y.to(args.device), subject_idxs.to(args.device)
+            X, y = X.to(args.device), y.to(args.device)
             
             with torch.no_grad():
                 y_pred = model(X, subject_idxs)
@@ -179,8 +183,10 @@ def run(args: DictConfig):
 
     preds = [] 
     model.eval()
-    for X, subject_idxs in tqdm(test_loader, desc="Validation"):        
-        preds.append(model(X.to(args.device), subject_idxs.to(args.device)).detach().cpu())
+    #for X, subject_idxs in tqdm(test_loader, desc="Validation"):        
+    #    preds.append(model(X.to(args.device), subject_idxs.to(args.device)).detach().cpu())
+    for X in tqdm(test_loader, desc="Validation"):        
+        preds.append(model(X.to(args.device)).detach().cpu())
         
     preds = torch.cat(preds, dim=0).numpy()
     np.save(os.path.join(logdir, "submission"), preds)
