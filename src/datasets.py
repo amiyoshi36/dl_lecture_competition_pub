@@ -126,7 +126,7 @@ class ThingsMEGDataset_2(torch.utils.data.Dataset):  # load images too
 # 前処理
 import scipy.signal
 from sklearn.preprocessing import StandardScaler
-
+"""
 # リサンプリング
 def resample_signal(signal, orig_sr, target_sr):
     duration = signal.shape[-1] / orig_sr
@@ -154,6 +154,36 @@ def baseline_correction(signal):
     mean_baseline = np.mean(signal, axis=-1, keepdims=True)
     corrected_signal = signal - mean_baseline
     return corrected_signal
+"""
+
+def baseline_correction(signal):
+    """
+    Baseline correction by subtracting the mean of the baseline period.
+    
+    Args:
+        signal (numpy.ndarray): Input signal with shape (channels, time).
+        baseline_period (tuple): Start and end indices for the baseline period.
+    
+    Returns:
+        numpy.ndarray: Baseline-corrected signal.
+    """
+    baseline = signal[:, 0:50]
+    baseline_mean = baseline.mean(axis=1, keepdims=True)
+    return signal - baseline_mean
+
+def standardize(signal):
+    """
+    Standardize the signal (z-score normalization).
+    
+    Args:
+        signal (numpy.ndarray): Input signal with shape (channels, time).
+    
+    Returns:
+        numpy.ndarray: Standardized signal.
+    """
+    mean = signal.mean(axis=1, keepdims=True)
+    std = signal.std(axis=1, keepdims=True)
+    return (signal - mean) / std
 
 class ThingsMEGDataset_3(torch.utils.data.Dataset):  # imageなし、前処理あり
     def __init__(self, split: str, data_dir: str = "data") -> None:
@@ -182,8 +212,11 @@ class ThingsMEGDataset_3(torch.utils.data.Dataset):  # imageなし、前処理�
         #Xi = resample_signal(Xi, self.orig_sr, self.target_sr)  # リサンプリング
         #Xi = butter_bandpass_filter(Xi, lowcut=0.5, highcut=40.0, fs=self.target_sr)  # フィルタリング
         #Xi = scale_signal(Xi)  # スケーリング
-        Xi = baseline_correction(Xi)    # ベースライン補正
-        Xi = torch.tensor(Xi, dtype=torch.float32)  # numpy to tensor
+        #Xi = baseline_correction(Xi)    # ベースライン補正
+        #Xi = torch.tensor(Xi, dtype=torch.float32)  # numpy to tensor
+        Xi = standardize(Xi)
+        Xi = baseline_correction(Xi)
+        
         if hasattr(self, "y"):
             return Xi, self.y[i], self.subject_idxs[i]
         else:
