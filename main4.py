@@ -187,7 +187,7 @@ def run(args: DictConfig):
     model.eval()
     #for X, subject_idxs in tqdm(test_loader, desc="Validation"):        
     #    preds.append(model(X.to(args.device), subject_idxs.to(args.device)).detach().cpu())
-    for X in tqdm(test_loader, desc="Validation"):        
+    for X, id in tqdm(test_loader, desc="Validation"):        
         preds.append(model(X.to(args.device)).detach().cpu())
         
     preds = torch.cat(preds, dim=0).numpy()
